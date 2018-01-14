@@ -3,6 +3,8 @@ GO
 USE NikiShop
 GO
 
+--ALTER DATABASE NikiShop SET QUERY_STORE = ON; 
+
 CREATE TABLE Currency(
 CurrencyID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Code nvarchar(10) NOT NULL,
@@ -87,6 +89,7 @@ CREATE TABLE Store(
 StoreID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(30) NOT NULL,
 AddressID int NOT NULL FOREIGN KEY REFERENCES Address(AddressID),
+AverageRating decimal(2,1) NOT NULL,
 CONSTRAINT uc_StoreName UNIQUE(Name)
 )
 
@@ -132,6 +135,7 @@ Name nvarchar(30) NOT NULL,
 QuantityPerUnit nvarchar(20) NULL,
 PricePerUnit money NULL,
 UnitsInStock int NULL,
+AverageRating decimal(2,1) NOT NULL,
 ProducerID int NOT NULL FOREIGN KEY REFERENCES Producer(ProducerID)
 )
 
@@ -174,7 +178,7 @@ CONSTRAINT uc_ProductStore UNIQUE(ProductID, StoreID)
 CREATE TABLE Product_Reviews(
 ReviewID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Rating decimal(2,1) NOT NULL,
-Text text NOT NULL,
+Text nvarchar(1000) NOT NULL,
 UserID int NOT NULL FOREIGN KEY REFERENCES Users(UserID),
 ProductID int NOT NULL FOREIGN KEY REFERENCES Product(ProductID),
 CONSTRAINT chk_Rating CHECK (Rating >= 0 AND Rating <= 5),
@@ -184,7 +188,7 @@ CONSTRAINT uc_ProductReview UNIQUE(UserID, ProductID)
 CREATE TABLE Store_Reviews(
 ReviewID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Rating decimal(2,1) NOT NULL,
-Text text NOT NULL,
+Text nvarchar(1000) NOT NULL,
 UserID int NOT NULL FOREIGN KEY REFERENCES Users(UserID),
 StoreID int NOT NULL FOREIGN KEY REFERENCES Store(StoreID),
 CONSTRAINT chk_StoreReviewRating CHECK (Rating >= 0 AND Rating <= 5),
@@ -194,7 +198,7 @@ CONSTRAINT uc_StoreReview UNIQUE(UserID, StoreID)
 CREATE TABLE Orders_Reviews(
 ReviewID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Rating decimal(2,1) NOT NULL,
-Text text NOT NULL,
+Text nvarchar(1000) NOT NULL,
 UserID int NOT NULL FOREIGN KEY REFERENCES Users(UserID),
 OrderID int NOT NULL FOREIGN KEY REFERENCES Orders(OrderID),
 ShippingCompanyID int NOT NULL FOREIGN KEY REFERENCES ShippingCompany(ShippingCompanyID),
@@ -376,3 +380,99 @@ ORDER BY p.Name
 CREATE INDEX idx_ProductCategoryID
 ON Product_ProductCategory(ProductCategoryID)
 
+
+
+--Show All reviews for a product , by product name
+SELECT pr.ReviewID, pr.Text, pr.Rating, u.FirstName, u.LastName
+FROM Product p
+INNER JOIN Product_Reviews pr
+ON p.ProductID = pr.ProductID
+INNER JOIN Users u
+ON pr.UserID = u.UserID
+WHERE p.Name = 'sada'
+
+CREATE INDEX idx_Name
+ON Product(Name)
+
+CREATE INDEX idx_ProductID
+ON Product_Reviews(ProductID)
+INCLUDE(UserID, Rating, Text)
+
+--Show all products in a store by name , ordered by price desc
+SELECT s.Name, p.Name, p.PricePerUnit
+FROM Product p
+INNER JOIN Product_Store ps
+ON p.ProductID= ps.ProductID
+INNER JOIN Store s
+ON ps.StoreID = s.StoreID
+WHERE s.Name = 'ss'
+ORDER BY ps.ProductPrice DESC
+
+--Update Product Average rating Column
+UPDATE Product
+SET AverageRating = res.AverageRating
+FROM
+		(
+			SELECT p.ProductID, AVG(pr.Rating) AS AverageRating
+			FROM Product p
+			INNER JOIN Product_Reviews pr
+			ON p.ProductID = pr.ProductID
+			GROUP BY p.ProductID
+		)res
+WHERE res.ProductID = Product.ProductID
+
+----Update Store Average rating Column
+UPDATE Store
+SET AverageRating = res.AverageRating
+FROM
+		(
+			SELECT s.StoreID, AVG(sr.Rating) AS AverageRating
+			FROM Store s
+			INNER JOIN Store_Reviews sr
+			ON s.StoreID = sr.StoreID
+			GROUP BY s.StoreID
+		)res
+WHERE res.StoreID = Store.StoreID
+
+--Show all products in all stores with rating better than 3 and order them by price desc
+SELECT p.Name, s.Name, ps.ProductPrice
+FROM Product p
+INNER JOIN Product_Store ps
+ON p.ProductID = ps.ProductID
+INNER JOIN Store s
+ON ps.StoreID = s.StoreID
+WHERE p.AverageRating > 3
+ORDER BY ps.ProductPrice DESC
+
+CREATE INDEX idx_AverageRating
+ON Product(AverageRating)
+INCLUDE(Name)
+
+CREATE INDEX idx_ProductPrice
+ON Product_Store(ProductPrice DESC)
+INCLUDE(StoreID, ProductID)
+
+--Show Product by name and the store that offers it at the lowest price
+SELECT TOP 1 p.Name, s.Name
+FROM Product p
+INNER JOIN Product_Store ps
+ON p.ProductID = ps.ProductID
+INNER JOIN Store s
+ON ps.StoreID = s.StoreID
+WHERE p.Name = 'jjhhs'
+ORDER BY ps.ProductPrice ASC
+
+--Show all products by producer name
+SELECT p.Name , pro.Name
+FROM Product p
+INNER JOIN Producer pro
+ON p.ProducerID = pro.ProducerID
+WHERE pro.Name = 'sd'
+
+CREATE INDEX idx_Name
+ON Producer(Name)
+INCLUDE(ProducerID)
+
+CREATE INDEX idx_ProducerID_Name
+ON Product(ProducerID)
+INCLUDE(Name)
