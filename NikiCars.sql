@@ -37,7 +37,7 @@ CONSTRAINT uc_MobilePhone UNIQUE(MobilePhone)
 )
 
 CREATE TABLE CarMakes(
-CarMakeID int NOT NULL PRIMARY KEY,
+CarMakeID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(20) NOT NULL,
 Country nvarchar(20) NOT NULL,
 CONSTRAINT uc_CarMakeName UNIQUE(Name)
@@ -50,10 +50,8 @@ CONSTRAINT uc_CarTypeName UNIQUE(Name)
 )
 
 CREATE TABLE CarModels(
-CarModelID int NOT NULL PRIMARY KEY,
+CarModelID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(20) NOT NULL,
-ProductionStartDate smalldatetime NOT NULL,
-ProductionEndDate smalldatetime NOT NULL,
 CarMakeID int NOT NULL FOREIGN KEY REFERENCES CarMakes(CarMakeID),
 CarTypeID int NOT NULL FOREIGN KEY REFERENCES CarTypes(CarTypeID),
 CONSTRAINT uc_CarModelName UNIQUE(Name)
@@ -119,6 +117,8 @@ IsLeftSteering bit NOT NULL,
 IsUsed bit NOT NULL,
 IsForParts bit NOT NULL,
 IsDamaged bit NOT NULL,
+Title nvarchar(20) NULL,
+DateCreated smalldatetime NOT NULL,
 UserID int NOT NULL FOREIGN KEY REFERENCES Users(UserID)
 )
 
@@ -153,3 +153,70 @@ INNER JOIN CarMakes carm
 ON cm.CarMakeID= carm.CarMakeID
 WHERE carm.Name = 'Honda' AND c.FirstRegistrationDate > '2007/12/31' AND c.IsUsed = 1
 ORDER BY c.Price ASC
+
+CREATE INDEX idx_FirstRegistrationDate_Price
+ON Cars(Price ASC, FirstRegistrationDate)
+INCLUDE(IsUsed, Kilometers, UserID, FuelTypeID, CarModelID)
+
+--Sow all cars by make name , with specific extras after 2009 order by price
+SELECT DISTINCT c.Title, crm.Name, cmds.Name, ft.Name, c.Kilometers, c.FirstRegistrationDate, c.Price, u.Name, ci.Name
+FROM Cars c
+INNER JOIN Users u
+ON c.UserID = u.UserID
+INNER JOIN City ci
+ON u.CityID = ci.CityID
+INNER JOIN CarModels cmds
+ON c.CarModelID = cmds.CarModelID
+INNER JOIN CarMakes crm
+ON cmds.CarMakeID = crm.CarMakeID
+INNER JOIN Cars_CarExtras cextr
+ON c.CarID = cextr.CarID
+INNER JOIN CarExtras ext
+ON cextr.CarExtraID= ext.CarExtraID
+INNER JOIN FuelTypes ft
+ON c.FuelTypeID = ft.FuelTypeID
+WHERE crm.Name = 'Kia' AND c.FirstRegistrationDate > '2008/12/31' AND c.IsUsed = 1 AND c.CarID IN (SELECT c.CarID 
+																											FROM CarExtras ext 
+																											INNER JOIN Cars_CarExtras ce 
+																											ON ext.CarExtraID = ce.CarExtraID
+																											INNER JOIN Cars c
+																											ON ce.CarID = c.CarID
+																											WHERE ext.Name = 'Airbag'
+																									INTERSECT
+																									SELECT c.CarID
+																											FROM CarExtras ext 
+																											INNER JOIN Cars_CarExtras ce 
+																											ON ext.CarExtraID = ce.CarExtraID
+																											INNER JOIN Cars c
+																											ON ce.CarID = c.CarID
+																											WHERE ext.Name = 'ABS'
+																									INTERSECT
+																									SELECT c.CarID
+																											FROM CarExtras ext 
+																											INNER JOIN Cars_CarExtras ce 
+																											ON ext.CarExtraID = ce.CarExtraID
+																											INNER JOIN Cars c
+																											ON ce.CarID = c.CarID
+																											WHERE ext.Name = 'ASR')
+ORDER BY c.Price ASC
+
+
+--Show all cars in a city by name , up to a specific price ordered by date added desc
+SELECT c.Title, crm.Name, cmds.Name, ft.Name, c.Kilometers, c.FirstRegistrationDate, c.Price, u.Name, ci.Name
+FROM Cars c
+INNER JOIN Users u
+ON c.UserID = u.UserID
+INNER JOIN City ci
+ON u.CityID = ci.CityID
+INNER JOIN CarModels cmds
+ON c.CarModelID = cmds.CarModelID
+INNER JOIN CarMakes crm
+ON cmds.CarMakeID = crm.CarMakeID
+INNER JOIN FuelTypes ft
+ON c.FuelTypeID = ft.FuelTypeID
+WHERE ci.Name = 'Sofia' AND c.Price < 210000
+ORDER BY c.DateCreated DESC
+
+DROP INDEX idx_Price
+ON Cars(Price ASC, DateCreated DESC)
+INCLUDE(FirstRegistrationDate, IsUsed, Kilometers, UserID, FuelTypeID, CarModelID, Title)
