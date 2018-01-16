@@ -13,7 +13,7 @@ CREATE TABLE CityID(
 CityID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(20) NOT NULL,
 CountyID int NOT NULL FOREIGN KEY REFERENCES Counties(CountyID),
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_CityName UNIQUE(Name)
 )
 
 CREATE TABLE Users(
@@ -31,7 +31,7 @@ Website nvarchar(30) NULL,
 PageName nvarchar(10) NULL,
 IsOrganisation bit NOT NULL,
 IsOfficialImporter bit NOT NULL,
-CONSTRAINT uc_Name UNIQUE(Name),
+CONSTRAINT uc_UserName UNIQUE(Name),
 CONSTRAINT uc_Email UNIQUE(Email),
 CONSTRAINT uc_MobilePhone UNIQUE(MobilePhone)
 )
@@ -40,13 +40,13 @@ CREATE TABLE CarMakes(
 CarMakeID int NOT NULL PRIMARY KEY,
 Name nvarchar(20) NOT NULL,
 Country nvarchar(20) NOT NULL,
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_CarMakeName UNIQUE(Name)
 )
 
 CREATE TABLE CarTypes(
 CarTypeID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(15) NOT NULL,
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_CarTypeName UNIQUE(Name)
 )
 
 CREATE TABLE CarModels(
@@ -56,19 +56,19 @@ ProductionStartDate smalldatetime NOT NULL,
 ProductionEndDate smalldatetime NOT NULL,
 CarMakeID int NOT NULL FOREIGN KEY REFERENCES CarMakes(CarMakeID),
 CarTypeID int NOT NULL FOREIGN KEY REFERENCES CarTypes(CarTypeID),
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_CarModelName UNIQUE(Name)
 )
 
 CREATE TABLE CarCoupe(
 CarCoupeID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(15) NOT NULL
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_CarCoupeName UNIQUE(Name)
 )
 
 CREATE TABLE FuelTypes(
 FuelTypeID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(10) NOT NULL,
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_TuelTypeName UNIQUE(Name)
 )
 
 CREATE TABLE NumberOfDoors(
@@ -92,13 +92,13 @@ FOREIGN KEY(CarCoupeID) REFERENCES CarCoupe(CarCoupeID)
 CREATE TABLE CarExtras(
 CarExtraID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(15) NOT NULL,
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_CarExtrasName UNIQUE(Name)
 )
 
 CREATE TABLE Colours(
 ColourID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(15) NOT NULL,
-CONSTRAINT uc_Name UNIQUE(Name)
+CONSTRAINT uc_ColoursName UNIQUE(Name)
 )
 
 CREATE TABLE Cars(
