@@ -9,7 +9,7 @@ Name nvarchar(20) NOT NULL,
 CONSTRAINT uc_Name UNIQUE(Name)
 )
 
-CREATE TABLE CityID(
+CREATE TABLE City(
 CityID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 Name nvarchar(20) NOT NULL,
 CountyID int NOT NULL FOREIGN KEY REFERENCES Counties(CountyID),
@@ -23,7 +23,7 @@ Email nvarchar(20) NOT NULL,
 LoginName nvarchar(15) NOT NULL,
 Password nvarchar(20) NOT NULL,
 MobilePhone nvarchar(20) NOT NULL,
-CityID int NOT NULL FOREIGN KEY REFERENCES CityID(CityID),
+CityID int NOT NULL FOREIGN KEY REFERENCES City(CityID),
 Address nvarchar(30) NULL,
 Type nvarchar(15) NULL,
 Bulstat nvarchar(15) NULL,
@@ -135,3 +135,21 @@ PRIMARY KEY(CarID, CarExtraID),
 FOREIGN KEY(CarID) REFERENCES Cars(CarID),
 FOREIGN KEY(CarExtraID) REFERENCES CarExtras(CarExtraID)
 )
+
+--Queries
+
+--Show all cars after 2008 by make name ordered by price asc
+SELECT cm.Name, carm.Name, ft.Name, c.Kilometers, c.FirstRegistrationDate, c.Price, u.Name, ci.Name
+FROM Cars c
+INNER JOIN Users u
+ON c.UserID = u.UserID
+INNER JOIN City ci
+ON u.CityID = ci.CityID
+INNER JOIN FuelTypes ft
+ON c.FuelTypeID = ft.FuelTypeID
+INNER JOIN CarModels cm
+ON c.CarModelID = cm.CarModelID
+INNER JOIN CarMakes carm
+ON cm.CarMakeID= carm.CarMakeID
+WHERE carm.Name = 'Honda' AND c.FirstRegistrationDate > '2007/12/31' AND c.IsUsed = 1
+ORDER BY c.Price ASC
