@@ -31,7 +31,6 @@ Website nvarchar(30) NULL,
 PageName nvarchar(10) NULL,
 IsOrganisation bit NOT NULL,
 IsOfficialImporter bit NOT NULL,
-RoleID int NOT NULL FOREIGN KEY REFERENCES UserRoles(RoleID),
 CONSTRAINT uc_UserName UNIQUE(Name),
 CONSTRAINT uc_Email UNIQUE(Email),
 CONSTRAINT uc_MobilePhone UNIQUE(MobilePhone)
@@ -142,6 +141,14 @@ RoleID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 RoleName nvarchar(15) NOT NULL,
 RoleDescription nvarchar(20) NOT NULL,
 CONSTRAINT uc_RoleName UNIQUE(RoleName)
+)
+
+CREATE TABLE Users_UserRoles(
+UserID int NOT NULL,
+RoleID int NOT NULL,
+PRIMARY KEY(UserID, RoleID),
+FOREIGN KEY(UserID) REFERENCES Users(UserID),
+FOREIGN KEY(RoleID) REFERENCES UserRoles(RoleID)
 )
 
 --Queries
